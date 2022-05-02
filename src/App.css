@@ -1,38 +1,53 @@
-.App {
-  text-align: center;
+input[type=range] {
+    appearance: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+input[type=range]::-webkit-slider-thumb {
+    appearance: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+div.slider {
+    position: relative;
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+div.slider > input {
+    position: absolute;
+    width: 100%;
+    /*cursor: col-resize;*/
+    pointer-events: none;
+    height: 0;
 }
 
-.App-link {
-  color: #61dafb;
+div.slider > input::-webkit-slider-thumb {
+    position: relative;
+    bottom: 0;
+    width: 20px;
+    height: 20px;
+    border: none;
+    pointer-events: all;
+    background-color: black;
+    border-radius: 10px;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+div.slider > input:first-child {
+    left: 0;
+    z-index: 3;
 }
+
+
+div.slider > input:last-child {
+    right: 0;
+    z-index: 4;
+}
+
+div.slider > input:first-child::-webkit-slider-thumb {
+    transform: translate(-50%, 0);
+}
+
+
+div.slider > input:last-child::-webkit-slider-thumb {
+    transform: translate(50%, 0);
+}
+
