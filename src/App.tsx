@@ -17,6 +17,7 @@ function App() {
     const [videoHeight, setVideoHeight] = React.useState(0);
     const [renderedVideo, setRenderedVideo] = React.useState<null | Blob>(null);
     const [fileName, setFileName] = React.useState("testVideo");
+    const [videoFrame, setVideoFrame] = React.useState(0);
     const mpegLoaded = React.useRef<boolean>(false);
     const videoRef = useRef<HTMLVideoElement>(null);
     const ffmpeg = useMemo(() => {
@@ -27,6 +28,7 @@ function App() {
     }, []);
     useEffect(() => {
         if (videoRef.current && videoURL) {
+            setVideoFrame(0);
             setTimeout(() => {
                 if (videoRef.current) {
                     videoRef.current.currentTime = 0;
@@ -44,7 +46,9 @@ function App() {
     useEffect(() => {
         if (!mpegLoaded.current && ffmpeg) {
             mpegLoaded.current = true;
-            ffmpeg.load().then(() => setMpegReady(true));
+            ffmpeg.load().then(() => {
+                setMpegReady(true);
+            });
         }
     }, [ffmpeg]);
 
@@ -122,6 +126,44 @@ function App() {
             }
         }
     }
+    const handleTestButton = async () => {
+        if (mpegReady) {
+            // @ts-ignore
+            console.stdlog = console.log.bind(console);
+            // @ts-ignore
+            console.logs = [];
+            console.log = function(){
+                // @ts-ignore
+                console.logs.push(Array.from(arguments));
+                // @ts-ignore
+                console.stdlog.apply(console, arguments);
+            }
+
+            // @ts-ignore
+            console.logs.length = 0;
+            const fetchedVideo = await fetchFile(videoURL);
+            ffmpeg.FS('writeFile', "test.webm", fetchedVideo);
+            await ffmpeg.run(
+                '-i', 'test.webm',
+            );
+
+            setVideoFrame(
+                // @ts-ignore
+                parseFloat(/(\d*\.?\d* fps)/g.exec(console.logs.filter((v: string[]) => (v[0].includes("fps") && v[0].includes("Video")))[0])[0].replace(' fps', ''))
+            );
+
+            // @ts-ignore
+            console.logs.length = 0;
+            // console.clear();
+
+            // @ts-ignore
+            console.log = console.stdlog.bind(console);
+            // @ts-ignore
+            console.logs = undefined;
+            // @ts-ignore
+            console.stdlog = undefined;
+        }
+    };
 
     const {getRootProps} = useDropzone({onDrop: handleDrop});
 
@@ -133,7 +175,9 @@ function App() {
             </div>
             <br/>
             <video ref={videoRef} style={{width: "600px", display: !!videoURL ? "unset" : "none"}} src={videoURL}
-                   autoPlay={true} muted={true} playsInline={true} loop={true}/>
+                // autoPlay={true}  loop={true}
+                   controls
+                   muted={true} playsInline={true}/>
             <div>
                 <span>Please Drop Video</span><br/>
                 <button onClick={getRootProps().onClick}>Find File</button>
@@ -172,11 +216,15 @@ function App() {
                     <span>.mp4</span>
                     <br/>
                     <button disabled={progress !== 0 && progress !== 1} onClick={handleRender}>
-                        Render Video{progress > 0 && ` ${(progress * 100).toFixed(2)}%`}
+                        Render Video {progress > 0 && ` ${(progress * 100).toFixed(2)}%`}
                     </button>
                     {renderedVideo && progress === 1 && <button onClick={handleDownload}>
                         Download Video
-                    </button>}<br/>
+                    </button>}<br/><br/>
+                    <button onClick={handleTestButton}>
+                        {videoFrame === 0 ? "getFrame" : `fps: ${videoFrame}`}
+                    </button>
+                    {videoFrame !== 0 && <span> range frame number: {Math.floor(videoFrame * (rangeEnd - rangeStart))}</span>}
                 </Fragment>}
         </div>
     );
